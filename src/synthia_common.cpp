@@ -2,8 +2,7 @@
 
 namespace synthia {
 
-Transformation interpolateTransformations(const Transformation& left,
-                                          const Transformation& right,
+Transformation interpolateTransformations(const Transformation& left, const Transformation& right,
                                           double t) {
   Transformation output;
   // Linearly interpolate the position between the two.
@@ -11,8 +10,7 @@ Transformation interpolateTransformations(const Transformation& left,
 
   // slerp the rotation between the two.
   output.getRotation().toImplementation() =
-      left.getRotation().toImplementation().slerp(
-          t, right.getRotation().toImplementation());
+      left.getRotation().toImplementation().slerp(t, right.getRotation().toImplementation());
 
   return output;
 }

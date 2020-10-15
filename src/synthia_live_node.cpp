@@ -1,9 +1,10 @@
 #include <image_transport/image_transport.h>
-#include <opencv2/highgui/highgui.hpp>
 #include <pcl_ros/point_cloud.h>
 #include <ros/ros.h>
 #include <rosgraph_msgs/Clock.h>
 #include <tf/transform_broadcaster.h>
+
+#include <opencv2/highgui/highgui.hpp>
 
 #include "../include/synthia_to_rosbag/synthia_parser.h"
 #include "../include/synthia_to_rosbag/synthia_ros_conversions.h"
@@ -57,42 +58,38 @@ class SynthiaLiveNode {
   uint64_t current_timestamp_ns_;
 };
 
-SynthiaLiveNode::SynthiaLiveNode(const ros::NodeHandle& nh,
-                                 const ros::NodeHandle& nh_private,
+SynthiaLiveNode::SynthiaLiveNode(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private,
                                  const std::string& dataset_path)
-: nh_(nh),
-  nh_private_(nh_private),
-  image_transport_(nh_),
-  parser_(dataset_path, true),
-  world_frame_id_("world"),
-  imu_frame_id_("imu"),
-  cam_frame_id_prefix_("cam"),
-  velodyne_frame_id_("velodyne"),
-  current_entry_(0),
-  publish_dt_ns_(0),
-  current_timestamp_ns_(0) {
+    : nh_(nh),
+      nh_private_(nh_private),
+      image_transport_(nh_),
+      parser_(dataset_path, true),
+      world_frame_id_("world"),
+      imu_frame_id_("imu"),
+      cam_frame_id_prefix_("cam"),
+      velodyne_frame_id_("velodyne"),
+      current_entry_(0),
+      publish_dt_ns_(0),
+      current_timestamp_ns_(0) {
   // Load all the timestamp maps and calibration parameters.
   parser_.loadCalibration();
   parser_.loadTimestampMaps();
 
   // Advertise all the publishing topics for ROS live streaming.
   clock_pub_ = nh_.advertise<rosgraph_msgs::Clock>("/clock", 1, false);
-  pose_pub_ =
-      nh_.advertise<geometry_msgs::PoseStamped>("pose_imu", 10, false);
-  transform_pub_ = nh_.advertise<geometry_msgs::TransformStamped>(
-      "transform_imu", 10, false);
+  pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("pose_imu", 10, false);
+  transform_pub_ = nh_.advertise<geometry_msgs::TransformStamped>("transform_imu", 10, false);
 
   for (size_t cam_id = 0; cam_id < parser_.getNumCameras(); ++cam_id) {
-    image_pubs_.push_back(
-        image_transport_.advertiseCamera(synthia::getCameraFrameId(cam_id), 1));
+    image_pubs_.push_back(image_transport_.advertiseCamera(synthia::getCameraFrameId(cam_id), 1));
   }
 }
 
 void SynthiaLiveNode::startPublishing(double rate_hz) {
   double publish_dt_sec = 1.0 / rate_hz;
   publish_dt_ns_ = static_cast<uint64_t>(publish_dt_sec * 1e9);
-  publish_timer_ = nh_.createWallTimer(ros::WallDuration(publish_dt_sec),
-                                       &SynthiaLiveNode::timerCallback, this);
+  publish_timer_ =
+      nh_.createWallTimer(ros::WallDuration(publish_dt_sec), &SynthiaLiveNode::timerCallback, this);
 }
 
 void SynthiaLiveNode::timerCallback(const ros::WallTimerEvent& event) {
@@ -108,8 +105,7 @@ void SynthiaLiveNode::timerCallback(const ros::WallTimerEvent& event) {
     }
     current_timestamp_ns_ = parser_.getPoseTimestampAtEntry(current_entry_);
     publishClock(current_timestamp_ns_);
-    if (parser_.interpolatePoseAtTimestamp(current_timestamp_ns_,
-                                           &tf_interpolated)) {
+    if (parser_.interpolatePoseAtTimestamp(current_timestamp_ns_, &tf_interpolated)) {
       publishTf(current_timestamp_ns_, tf_interpolated);
     }
     current_entry_++;
@@ -118,17 +114,15 @@ void SynthiaLiveNode::timerCallback(const ros::WallTimerEvent& event) {
 
   current_timestamp_ns_ += publish_dt_ns_;
   publishClock(current_timestamp_ns_);
-  if (parser_.interpolatePoseAtTimestamp(current_timestamp_ns_,
-                                         &tf_interpolated)) {
+  if (parser_.interpolatePoseAtTimestamp(current_timestamp_ns_, &tf_interpolated)) {
     publishTf(current_timestamp_ns_, tf_interpolated);
   } else {
     std::cout << "Failed to interpolate!\n";
   }
 
-  std::cout << "Current entry's timestamp: "
-      << parser_.getPoseTimestampAtEntry(current_entry_) << std::endl;
-  if (parser_.getPoseTimestampAtEntry(current_entry_) <=
-      current_timestamp_ns_) {
+  std::cout << "Current entry's timestamp: " << parser_.getPoseTimestampAtEntry(current_entry_)
+            << std::endl;
+  if (parser_.getPoseTimestampAtEntry(current_entry_) <= current_timestamp_ns_) {
     if (!publishEntry(current_entry_)) {
       publish_timer_.stop();
       return;
@@ -198,8 +192,7 @@ bool SynthiaLiveNode::publishEntry(uint64_t entry) {
   return true;
 }
 
-void SynthiaLiveNode::publishTf(uint64_t timestamp_ns,
-                                const synthia::Transformation& imu_pose) {
+void SynthiaLiveNode::publishTf(uint64_t timestamp_ns, const synthia::Transformation& imu_pose) {
   ros::Time timestamp_ros;
   synthia::timestampToRos(timestamp_ns, &timestamp_ros);
   synthia::Transformation T_imu_world = imu_pose;
@@ -211,16 +204,16 @@ void SynthiaLiveNode::publishTf(uint64_t timestamp_ns,
   synthia::transformToTf(T_imu_world, &tf_imu_world);
   synthia::transformToTf(T_vel_imu.inverse(), &tf_vel_imu);
 
-  tf_broadcaster_.sendTransform(tf::StampedTransform(
-      tf_imu_world, timestamp_ros, world_frame_id_, imu_frame_id_));
-  tf_broadcaster_.sendTransform(tf::StampedTransform(
-      tf_vel_imu, timestamp_ros, imu_frame_id_, velodyne_frame_id_));
+  tf_broadcaster_.sendTransform(
+      tf::StampedTransform(tf_imu_world, timestamp_ros, world_frame_id_, imu_frame_id_));
+  tf_broadcaster_.sendTransform(
+      tf::StampedTransform(tf_vel_imu, timestamp_ros, imu_frame_id_, velodyne_frame_id_));
 
   for (size_t cam_id = 0; cam_id < parser_.getNumCameras(); ++cam_id) {
     T_cam_imu = parser_.T_camN_imu(cam_id);
     synthia::transformToTf(T_cam_imu.inverse(), &tf_cam_imu);
-    tf_broadcaster_.sendTransform(tf::StampedTransform(
-        tf_cam_imu, timestamp_ros, imu_frame_id_, synthia::getCameraFrameId(cam_id)));
+    tf_broadcaster_.sendTransform(tf::StampedTransform(tf_cam_imu, timestamp_ros, imu_frame_id_,
+                                                       synthia::getCameraFrameId(cam_id)));
   }
 }
 
@@ -235,7 +228,8 @@ int main(int argc, char** argv) {
   ros::NodeHandle nh_private("~");
 
   const std::string dataset_path =
-      "/media/johnny/082e0614-ce4c-45cc-abc5-dbde7ae882bb/SYNTHIA/Video_sequences/SYNTHIA-SEQS-04-SUMMER";
+      "/media/johnny/082e0614-ce4c-45cc-abc5-dbde7ae882bb/SYNTHIA/Video_sequences/"
+      "SYNTHIA-SEQS-04-SUMMER";
 
   synthia::SynthiaLiveNode node(nh, nh_private, dataset_path);
 

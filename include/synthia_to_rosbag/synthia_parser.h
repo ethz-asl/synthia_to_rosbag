@@ -1,14 +1,13 @@
 #ifndef SYNTHIA_TO_ROSBAG_SYNTHIA_PARSER_H_
 #define SYNTHIA_TO_ROSBAG_SYNTHIA_PARSER_H_
 
-#include <memory>
-#include <map>
-
-#include <opencv2/core/core.hpp>
-
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
+
+#include <map>
+#include <memory>
+#include <opencv2/core/core.hpp>
 
 #include "synthia_to_rosbag/synthia_common.h"
 
@@ -46,10 +45,8 @@ class SynthiaParser {
   void loadTimestampMaps();
 
   // Load specific entries (indexed by filename).
-  bool getPoseAtEntry(uint64_t entry, uint64_t* timestamp,
-                      synthia::Transformation* pose);
-  bool getCameraPoseAtEntry(uint64_t entry, uint64_t id,
-                            synthia::Transformation* pose);
+  bool getPoseAtEntry(uint64_t entry, uint64_t* timestamp, synthia::Transformation* pose);
+  bool getCameraPoseAtEntry(uint64_t entry, uint64_t id, synthia::Transformation* pose);
   bool flipYZ(std::vector<double>* parsed_doubles);
   uint64_t getPoseTimestampAtEntry(uint64_t entry);
 
@@ -61,19 +58,15 @@ class SynthiaParser {
   bool getImuAtEntry() { /* TODO! */
     return false;
   }
-  std::string getCameraPath(uint64_t cam_id) {
-    return cam_paths_[cam_id];
-  }
+  std::string getCameraPath(uint64_t cam_id) { return cam_paths_[cam_id]; }
   //  bool getPointcloudAtEntry(uint64_t entry, uint64_t* timestamp,
   //                            pcl::PointCloud<pcl::PointXYZI>* ptcloud);
-  bool getImageAtEntry(uint64_t entry, uint64_t cam_id, uint64_t* timestamp,
-                       cv::Mat* image);
-  bool getDepthImageAtEntry(uint64_t entry, uint64_t cam_id,
-                            uint64_t* timestamp, cv::Mat* depth_image);
-  bool getLabelImageAtEntry(uint64_t entry, uint64_t cam_id,
-                            uint64_t* timestamp, cv::Mat* label_image);
-  bool getLabelsAtEntry(uint64_t entry, uint64_t cam_id,
-                        uint64_t* timestamp, cv::Mat* label_image);
+  bool getImageAtEntry(uint64_t entry, uint64_t cam_id, uint64_t* timestamp, cv::Mat* image);
+  bool getDepthImageAtEntry(uint64_t entry, uint64_t cam_id, uint64_t* timestamp,
+                            cv::Mat* depth_image);
+  bool getLabelImageAtEntry(uint64_t entry, uint64_t cam_id, uint64_t* timestamp,
+                            cv::Mat* label_image);
+  bool getLabelsAtEntry(uint64_t entry, uint64_t cam_id, uint64_t* timestamp, cv::Mat* label_image);
 
   bool getCameraCalibration(uint64_t cam_id, synthia::CameraCalibration* cam) const;
 
@@ -99,13 +92,11 @@ class SynthiaParser {
 
   bool convertVectorToPose(const std::vector<double>& oxts, synthia::Transformation* pose);
   double latToScale(double lat) const;
-  void latlonToMercator(double lat, double lon, double scale,
-                        Eigen::Vector2d* mercator) const;
+  void latlonToMercator(double lat, double lon, double scale, Eigen::Vector2d* mercator) const;
   bool loadTimestampsIntoVector(const std::string& filename,
                                 std::vector<uint64_t>* timestamp_vec) const;
 
-  bool parseVectorOfDoubles(const std::string& input,
-                            std::vector<double>* output) const;
+  bool parseVectorOfDoubles(const std::string& input, std::vector<double>* output) const;
 
   //  std::string getFolderNameForCamera(int cam_number) const;
   std::string getFilenameForEntry(uint64_t entry) const;
@@ -139,6 +130,6 @@ class SynthiaParser {
   synthia::Transformation T_initial_pose_;
   double mercator_scale_;
 };
-}
+}  // namespace synthia
 
 #endif  // SYNTHIA_TO_ROSBAG_SYNTHIA_PARSER_H_

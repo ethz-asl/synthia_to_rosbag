@@ -1,8 +1,8 @@
 #include <cv_bridge/cv_bridge.h>
 #include <minkindr_conversions/kindr_msg.h>
 #include <minkindr_conversions/kindr_tf.h>
-#include "synthia_to_rosbag/synthia_ros_conversions.h"
 
+#include "synthia_to_rosbag/synthia_ros_conversions.h"
 
 namespace synthia {
 
@@ -52,8 +52,7 @@ void calibrationToRos(uint64_t cam_id, const CameraCalibration& cam,
 }
 
 void stereoCalibrationToRos(uint64_t left_cam_id, uint64_t right_cam_id,
-                            const CameraCalibration& left_cam,
-                            const CameraCalibration& right_cam,
+                            const CameraCalibration& left_cam, const CameraCalibration& right_cam,
                             sensor_msgs::CameraInfo* left_cam_msg,
                             sensor_msgs::CameraInfo* right_cam_msg) {
   // Fill in the basics for each camera.
@@ -89,14 +88,12 @@ void depthImageToRos(const cv::Mat& depth_image, sensor_msgs::Image* depth_image
   image_cv_bridge.toImageMsg(*depth_image_msg);
 }
 
-void poseToRos(const Transformation& transform,
-               geometry_msgs::PoseStamped* pose_msg) {
+void poseToRos(const Transformation& transform, geometry_msgs::PoseStamped* pose_msg) {
   tf::poseKindrToMsg(transform, &pose_msg->pose);
 }
 
-void posesToPath(const std::vector<geometry_msgs::PoseStamped>& poses,
-                 nav_msgs::Path* path_msg) {
-  if(poses.size() > 0) {
+void posesToPath(const std::vector<geometry_msgs::PoseStamped>& poses, nav_msgs::Path* path_msg) {
+  if (poses.size() > 0) {
     path_msg->poses.resize(poses.size());
     for (size_t i = 0u; i < poses.size(); ++i) {
       path_msg->poses[i] = poses[i];
@@ -104,8 +101,7 @@ void posesToPath(const std::vector<geometry_msgs::PoseStamped>& poses,
   }
 }
 
-void transformToTf(const Transformation& transform,
-                   tf::Transform* tf_transform) {
+void transformToTf(const Transformation& transform, tf::Transform* tf_transform) {
   tf::transformKindrToTF(transform, tf_transform);
 }
 
@@ -114,8 +110,6 @@ void transformToRos(const Transformation& transform,
   tf::transformKindrToMsg(transform, &transform_msg->transform);
 }
 
-void timestampToRos(uint64_t timestamp_ns, ros::Time* time) {
-  time->fromNSec(timestamp_ns);
-}
+void timestampToRos(uint64_t timestamp_ns, ros::Time* time) { time->fromNSec(timestamp_ns); }
 
 }  // namespace synthia

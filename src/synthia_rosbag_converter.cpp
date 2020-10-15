@@ -1,10 +1,10 @@
-#include <opencv2/highgui/highgui.hpp>
+#include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/point_cloud.h>
 #include <rosbag/bag.h>
+#include <sensor_msgs/point_cloud2_iterator.h>
 #include <tf/tfMessage.h>
 
-#include <pcl_conversions/pcl_conversions.h>
-#include <sensor_msgs/point_cloud2_iterator.h>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "synthia_to_rosbag/synthia_parser.h"
 #include "synthia_to_rosbag/synthia_ros_conversions.h"
@@ -13,8 +13,7 @@ namespace synthia {
 
 class SynthiaBagConverter {
  public:
-  SynthiaBagConverter(const std::string& dataset_path,
-                      const std::string& output_filename);
+  SynthiaBagConverter(const std::string& dataset_path, const std::string& output_filename);
 
   void convertAll();
   bool convertEntry(uint64_t entry);
@@ -40,13 +39,13 @@ class SynthiaBagConverter {
 
 SynthiaBagConverter::SynthiaBagConverter(const std::string& dataset_path,
                                          const std::string& output_filename)
-: parser_(dataset_path, true),
-  world_frame_id_("world"),
-  imu_frame_id_("imu"),
-  cam_frame_id_prefix_("cam"),
-  path_topic_("path"),
-  pose_topic_("pose_imu"),
-  transform_topic_("transform_imu") {
+    : parser_(dataset_path, true),
+      world_frame_id_("world"),
+      imu_frame_id_("imu"),
+      cam_frame_id_prefix_("cam"),
+      path_topic_("path"),
+      pose_topic_("pose_imu"),
+      transform_topic_("transform_imu") {
   // Load all the timestamp maps and calibration parameters.
   parser_.loadCalibration();
   parser_.loadTimestampMaps();
@@ -94,7 +93,7 @@ bool SynthiaBagConverter::convertEntry(uint64_t entry) {
     // Get all camera poses.
     for (size_t id = 0u; id < parser_.getNumCameras(); ++id) {
       synthia::Transformation camera_pose;
-      if(!parser_.getCameraPoseAtEntry(entry, id, &camera_pose)) {
+      if (!parser_.getCameraPoseAtEntry(entry, id, &camera_pose)) {
         return false;
       }
       camera_poses.push_back(camera_pose);
@@ -107,11 +106,11 @@ bool SynthiaBagConverter::convertEntry(uint64_t entry) {
 
   // Convert images.
   cv::Mat image, depth_image, labels_image, labels;
-  for (size_t cam_id = 0; cam_id < parser_.getNumCameras(); ++cam_id) { // 5; cam_id = cam_id + 4)
+  for (size_t cam_id = 0; cam_id < parser_.getNumCameras(); ++cam_id) {  // 5; cam_id = cam_id + 4)
     if (parser_.getImageAtEntry(entry, cam_id, &timestamp_ns, &image) &&
         parser_.getDepthImageAtEntry(entry, cam_id, &timestamp_ns, &depth_image) &&
         parser_.getLabelImageAtEntry(entry, cam_id, &timestamp_ns, &labels_image) &&
-        parser_.getLabelsAtEntry(entry, cam_id, &timestamp_ns, &labels)){
+        parser_.getLabelsAtEntry(entry, cam_id, &timestamp_ns, &labels)) {
       synthia::timestampToRos(timestamp_ns, &timestamp_ros);
 
       sensor_msgs::Image image_msg, depth_image_msg, labels_image_msg, labels_msg;
@@ -142,33 +141,26 @@ bool SynthiaBagConverter::convertEntry(uint64_t entry) {
       ptcloud_msg.header.stamp = timestamp_ros;
       ptcloud_msg.header.frame_id = synthia::getCameraFrameId(cam_id);
       ptcloud_msg.height = depth_image_msg.height;
-      ptcloud_msg.width  = depth_image_msg.width;
+      ptcloud_msg.width = depth_image_msg.width;
       ptcloud_msg.is_dense = false;
       ptcloud_msg.is_bigendian = false;
 
-      parser_.convertDepthImageToDepthCloud(depth_image_msg, image_msg, labels_msg,
-                                            cam_info, &ptcloud_msg);
+      parser_.convertDepthImageToDepthCloud(depth_image_msg, image_msg, labels_msg, cam_info,
+                                            &ptcloud_msg);
 
-      bag_.write(parser_.getCameraPath(cam_id) + "/image_raw", timestamp_ros,
-                 image_msg);
-      bag_.write(parser_.getCameraPath(cam_id) + "/depth", timestamp_ros,
-                 depth_image_msg);
-      bag_.write(parser_.getCameraPath(cam_id) + "/labels_image", timestamp_ros,
-                 labels_image_msg);
-      bag_.write(parser_.getCameraPath(cam_id) + "/labels", timestamp_ros,
-                 labels_msg);
-      bag_.write(parser_.getCameraPath(cam_id) + "/camera_info", timestamp_ros,
-                 cam_info);
-      bag_.write(parser_.getCameraPath(cam_id) + "/pointcloud", timestamp_ros,
-                 ptcloud_msg);
+      bag_.write(parser_.getCameraPath(cam_id) + "/image_raw", timestamp_ros, image_msg);
+      bag_.write(parser_.getCameraPath(cam_id) + "/depth", timestamp_ros, depth_image_msg);
+      bag_.write(parser_.getCameraPath(cam_id) + "/labels_image", timestamp_ros, labels_image_msg);
+      bag_.write(parser_.getCameraPath(cam_id) + "/labels", timestamp_ros, labels_msg);
+      bag_.write(parser_.getCameraPath(cam_id) + "/camera_info", timestamp_ros, cam_info);
+      bag_.write(parser_.getCameraPath(cam_id) + "/pointcloud", timestamp_ros, ptcloud_msg);
     }
   }
 
   return true;
 }
 
-void SynthiaBagConverter::convertTf(uint64_t timestamp_ns,
-                                    const synthia::Transformation& imu_pose,
+void SynthiaBagConverter::convertTf(uint64_t timestamp_ns, const synthia::Transformation& imu_pose,
                                     const std::vector<synthia::Transformation>& camera_poses) {
   tf::tfMessage tf_msg;
   ros::Time timestamp_ros;
@@ -207,7 +199,7 @@ void SynthiaBagConverter::convertTf(uint64_t timestamp_ns,
   bag_.write("/tf", timestamp_ros, tf_msg);
 }
 
-}  // namespace Synthia
+}  // namespace synthia
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
@@ -216,7 +208,7 @@ int main(int argc, char** argv) {
 
   if (argc < 3) {
     std::cout << "Usage: rosrun synthia_to_rosbag synthia_rosbag_converter "
-        "dataset_path output_path\n";
+                 "dataset_path output_path\n";
     std::cout << "Note: no trailing slashes.\n";
     return 0;
   }
@@ -224,8 +216,7 @@ int main(int argc, char** argv) {
   const std::string dataset_path = argv[1];
   const std::string output_path = argv[2];
 
-  synthia::SynthiaBagConverter converter(dataset_path,
-                                         output_path);
+  synthia::SynthiaBagConverter converter(dataset_path, output_path);
   converter.convertAll();
 
   return 0;
