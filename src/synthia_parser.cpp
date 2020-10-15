@@ -423,6 +423,8 @@ bool SynthiaParser::convertVectorToPose(const std::vector<double>& pose_16,
   typedef Eigen::Matrix<double, 4, 4, Eigen::ColMajor> TransformationMatrix;
   Eigen::Map<TransformationMatrix> m1(pose_temp.data(), 4, 4);
   TransformationMatrix mat = m1;
+  Eigen::Quaternion<double> quat(mat.topLeftCorner<3,3>());
+  mat.topLeftCorner<3,3>() = quat.normalized().toRotationMatrix();
   synthia::Transformation t_temp(mat);
   *pose = t_temp;
 
