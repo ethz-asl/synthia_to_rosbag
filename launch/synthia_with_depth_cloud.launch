@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+  
+  <arg name="respawn_value" default="false" /> <!-- boolean: true, false -->
+  <arg name="bag_file" default="/media/johnny/082e0614-ce4c-45cc-abc5-dbde7ae882bb/SYNTHIA/Video_sequences/SYNTHIA-SEQS-04-SUMMER/testbag.bag" /> <!-- put your bag file here --> 
+
+  <!-- rosbag player node -->
+  <node name="player" pkg="rosbag" type="play" output="screen" args="--pause -r 0.1 -s 1 --clock $(arg bag_file)"/>
+  
+  <!-- depth image processing -->
+  <node pkg="nodelet" type="nodelet" name="cloudify"
+        args="load depth_image_proc/point_cloud_xyzrgb record_player_manager --no-bond">
+  <remap from="depth_registered/image_rect" to="/Stereo_Left/Omni_F/depth"/>
+  <remap from="depth_registered/points" to="camera/depth_registered/points"/>
+  <remap from="rgb/image_rect_color" to="Stereo_Left/Omni_F/image_raw"/>
+  <remap from="rgb/camera_info" to="Stereo_Left/Omni_F/camera_info"/>
+</node>
+  
+</launch>
